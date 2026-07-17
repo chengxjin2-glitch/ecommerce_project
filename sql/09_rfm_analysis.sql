@@ -337,9 +337,6 @@ SELECT
 
 FROM ecommerce_user_rfm_scores;
 
-ALTER TABLE ecommerce_user_rfm_segments
-ADD PRIMARY KEY (user_id);
-
 
 /* =========================================================
    7. Build RFM customer segment table
@@ -386,6 +383,9 @@ SELECT
     END AS customer_segment
 
 FROM ecommerce_user_rfm_scores;
+
+ALTER TABLE ecommerce_user_rfm_segments
+ADD PRIMARY KEY (user_id);
 
 
 /* =========================================================
