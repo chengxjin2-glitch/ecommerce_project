@@ -14,7 +14,7 @@
 
 ## Power BI 看板
 
-[查看完整三页 PDF 报告](docs/ecommerce_behavior_dashboard.pdf) · [查看 Power BI 设计与 DAX 说明](docs/powerbi_dashboard.md)
+[查看完整三页 PDF 报告](docs/ecommerce_behavior_dashboard.pdf) · [下载 Power BI 源文件](powerbi/ecommerce_behavior_dashboard.pbix) · [查看 Power BI 设计与 DAX 说明](docs/powerbi_dashboard.md)
 
 ### 经营概览
 
@@ -58,10 +58,13 @@ ecommerce_project/
 │   ├── dashboard_01_overview.png
 │   ├── dashboard_02_funnel_category.png
 │   └── dashboard_03_rfm.png
+├── powerbi/
+│   └── ecommerce_behavior_dashboard.pbix
 ├── results/
 │   ├── category_amount_top10.csv
 │   ├── category_purchase_top10.csv
 │   ├── core_metrics.csv
+│   ├── daily_metrics.csv
 │   ├── data_quality_summary.csv
 │   ├── funnel_summary.csv
 │   ├── high_traffic_low_conversion_categories.csv
