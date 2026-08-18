@@ -14,6 +14,9 @@
    - The dataset has no reliable order_id.
    - F is purchase-session frequency, not audited order count.
    - M is estimated transaction amount, not audited GMV.
+   - Purchasing users with no non-null session cannot receive a
+     reliable F score. They remain in the base table for audit but
+     are excluded from scoring and segmentation.
    ========================================================= */
 
 
@@ -149,6 +152,9 @@ ADD PRIMARY KEY (user_id);
    - rfm_users: 110,518
    - min_recency_days: 1
    - max_recency_days: 152
+   - min_purchase_sessions: 1
+   - zero_session_purchase_users: 0
+   - zero_session_purchase_events: 0
    - total_purchase_sessions: 155,617
    - total_purchase_events: 1,286,102
    - total_valid_purchase_events: 1,285,982
@@ -160,6 +166,18 @@ SELECT
     MIN(recency_days) AS min_recency_days,
     MAX(recency_days) AS max_recency_days,
     MIN(purchase_sessions) AS min_purchase_sessions,
+
+    SUM(
+        CASE WHEN purchase_sessions = 0 THEN 1 ELSE 0 END
+    ) AS zero_session_purchase_users,
+
+    SUM(
+        CASE
+            WHEN purchase_sessions = 0 THEN purchase_events
+            ELSE 0
+        END
+    ) AS zero_session_purchase_events,
+
     SUM(purchase_sessions) AS total_purchase_sessions,
     SUM(purchase_events) AS total_purchase_events,
     SUM(valid_purchase_events) AS total_valid_purchase_events,
@@ -214,6 +232,8 @@ FROM ecommerce_user_rfm_base;
         a higher score; equal values receive equal scores.
    - F: fixed thresholds because 78.91% of users have one
         purchase session, making NTILE unsuitable.
+        Users with zero non-null purchase sessions are excluded
+        because their frequency cannot be measured reliably.
    - M: PERCENT_RANK, ascending monetary value. Higher value
         gets a higher score; equal values receive equal scores.
    ========================================================= */
@@ -241,6 +261,8 @@ WITH rfm_percentiles AS (
         ) AS m_percentile
 
     FROM ecommerce_user_rfm_base
+
+    WHERE purchase_sessions >= 1
 ),
 
 rfm_scored AS (
@@ -268,7 +290,8 @@ rfm_scored AS (
             WHEN purchase_sessions = 2 THEN 2
             WHEN purchase_sessions = 3 THEN 3
             WHEN purchase_sessions BETWEEN 4 AND 5 THEN 4
-            ELSE 5
+            WHEN purchase_sessions >= 6 THEN 5
+            ELSE NULL
         END AS f_score,
 
         CASE
@@ -336,6 +359,46 @@ SELECT
     ) AS null_score_users
 
 FROM ecommerce_user_rfm_scores;
+
+
+/* Boundary validation. All three error counts must be 0. */
+
+SELECT
+    SUM(
+        CASE WHEN b.purchase_sessions = 0 THEN 1 ELSE 0 END
+    ) AS excluded_zero_session_users,
+
+    SUM(
+        CASE
+            WHEN b.purchase_sessions = 0
+             AND s.user_id IS NOT NULL
+            THEN 1
+            ELSE 0
+        END
+    ) AS wrongly_scored_zero_session_users,
+
+    SUM(
+        CASE
+            WHEN b.purchase_sessions >= 1
+             AND s.user_id IS NULL
+            THEN 1
+            ELSE 0
+        END
+    ) AS missing_eligible_scores,
+
+    SUM(
+        CASE
+            WHEN s.f_score = 5
+             AND b.purchase_sessions < 6
+            THEN 1
+            ELSE 0
+        END
+    ) AS invalid_high_frequency_scores
+
+FROM ecommerce_user_rfm_base AS b
+
+LEFT JOIN ecommerce_user_rfm_scores AS s
+    ON b.user_id = s.user_id;
 
 
 /* =========================================================
@@ -442,6 +505,8 @@ ADD PRIMARY KEY (customer_segment);
    - 8 segments
    - 110,518 users
    - 6,348,267.70 estimated transaction amount
+   - zero_session_purchase_users = 0, so the boundary fix does not
+     change the retained segment totals.
    ========================================================= */
 
 SELECT
