@@ -8,8 +8,8 @@
 - `ecommerce_funnel_summary`：三种漏斗口径汇总表，一种漏斗一行。
 - `ecommerce_category_metrics`：品类经营指标表，一个 `category_id` 一行。
 - `ecommerce_user_rfm_base`：购买用户 RFM 原始指标表，一个用户一行。
-- `ecommerce_user_rfm_scores`：购买用户 RFM 评分表，一个用户一行。
-- `ecommerce_user_rfm_segments`：购买用户 RFM 分群明细表，一个用户一行。
+- `ecommerce_user_rfm_scores`：可计算购买会话频次的购买用户 RFM 评分表，一个用户一行。
+- `ecommerce_user_rfm_segments`：可计算购买会话频次的购买用户 RFM 分群明细表，一个用户一行。
 - `ecommerce_rfm_segment_summary`：RFM 分群汇总表，一个用户群一行。
 
 ## 核心指标
@@ -69,5 +69,5 @@
 | F | 用户去重购买会话数 | 订单频次代理，不是真实订单数 |
 | M | 用户有效购买事件 price 之和 | 交易金额估算 |
 | R评分 | 按 R 降序计算 `PERCENT_RANK()` 后映射为 1–5 | 最近购买用户得分更高 |
-| F评分 | 1次=1分、2次=2分、3次=3分、4–5次=4分、6次及以上=5分 | 避免拆分大量 F=1 用户 |
+| F评分 | 1次=1分、2次=2分、3次=3分、4–5次=4分、6次及以上=5分 | F=0 表示该用户全部购买事件均缺失会话、无法可靠计频；保留在基础表审计但不进入评分与分群 |
 | M评分 | 按 M 升序计算 `PERCENT_RANK()` 后映射为 1–5 | 高金额用户得分更高 |
